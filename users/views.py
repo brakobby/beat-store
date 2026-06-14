@@ -14,7 +14,7 @@ User = get_user_model()
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
-    permission_class = [permissions.AllowAny]
+    permission_classes = [permissions.AllowAny]
 
 
 class LogoutView(APIView):
@@ -32,7 +32,7 @@ class LogoutView(APIView):
 
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
-    permission_class = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
         return self.request.user
