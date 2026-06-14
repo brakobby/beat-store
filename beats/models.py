@@ -15,6 +15,7 @@ class Beat(models.Model):
         CHILL = 'chill', 'Chill'
         MOTIVATIONAL = 'motivational', 'Motivational'
 
+
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     genre = models.ForeignKey(Genre, on_delete=models.SET_NULL, null=True)
