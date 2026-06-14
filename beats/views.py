@@ -6,7 +6,7 @@ from .serializers import BeatSerializer, GenreSerializer
 class BeatListView(generics.ListAPIView):
     serializer_class = BeatSerializer
     permission_classes = [permissions.AllowAny]
-    filter_backends = [filters.searchFilter]
+    filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'genre__name','mood']
     
     def get_queryset(self):
