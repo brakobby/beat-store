@@ -110,7 +110,7 @@ WSGI_APPLICATION = 'beatstore.wsgi.application'
 #     }
 # }
 
-DATABASE = {
+DATABASES = {
     'default':dj_database_url.config(
         default=os.getenv('DATABASE_URL'),
         conn_max_age = 600,
@@ -162,7 +162,7 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 
 # Spectacular Settings
-SPECTACULAR_SETTING = {
+SPECTACULAR_SETTINGS = {
     'TITLE':'Beat Store API Documentation',
     'DESCRIPTION': 'API documentation for Beatstore Project(browse, purchase and download beats)',
     'VERSION': '1.0.0',
@@ -208,8 +208,5 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 
-
-# CORS ALLOWED FOR FRONTEND
-CORS_ALLOWED_ORIGINS = []
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'    
