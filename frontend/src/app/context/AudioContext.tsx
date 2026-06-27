@@ -1,14 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
-
-interface Track {
-  id: string;
-  title: string;
-  producer: string;
-  audioUrl: string;
-  coverUrl?: string;
-}
+import { Track } from "../services/beatService";
 
 interface AudioContextType {
   currentTrack: Track | null;
@@ -16,6 +9,7 @@ interface AudioContextType {
   volume: number;
   currentTime: number;
   duration: number;
+  activePlaylist: Track[];
   playTrack: (track: Track) => void;
   togglePlay: () => void;
   changeVolume: (val: number) => void;
@@ -29,7 +23,7 @@ const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
-  const [playlist, setPlaylist] = useState<Track[]>([]);
+  const [activePlaylist, setActivePlaylist] = useState<Track[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.8);
   const [currentTime, setCurrentTime] = useState(0);
@@ -37,18 +31,23 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // 1. Core Event Functions (Declared early so useEffect hooks can read them seamlessly)
+  // Core Playback State Modifiers
   const playTrack = useCallback((track: Track) => {
     setCurrentTrack(track);
     setIsPlaying(true);
   }, []);
 
   const togglePlay = useCallback(() => {
+    if (!currentTrack) return;
     setIsPlaying((prev) => !prev);
-  }, []);
+  }, [currentTrack]);
 
   const changeVolume = useCallback((val: number) => {
-    setVolume(Math.max(0, Math.min(1, val)));
+    const boundedVolume = Math.max(0, Math.min(1, val));
+    setVolume(boundedVolume);
+    if (audioRef.current) {
+      audioRef.current.volume = boundedVolume;
+    }
   }, []);
 
   const seekTrack = useCallback((val: number) => {
@@ -59,24 +58,25 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const changeActivePlaylist = useCallback((list: Track[]) => {
-    setPlaylist(list);
+    if (!list) return;
+    setActivePlaylist(list);
   }, []);
 
   const nextTrack = useCallback(() => {
-    if (playlist.length === 0 || !currentTrack) return;
-    const currentIndex = playlist.findIndex((t) => t.id === currentTrack.id);
-    const nextIndex = (currentIndex + 1) % playlist.length;
-    playTrack(playlist[nextIndex]);
-  }, [playlist, currentTrack, playTrack]);
+    if (activePlaylist.length === 0 || !currentTrack) return;
+    const currentIndex = activePlaylist.findIndex((t) => t.id === currentTrack.id);
+    const nextIndex = (currentIndex + 1) % activePlaylist.length;
+    playTrack(activePlaylist[nextIndex]);
+  }, [activePlaylist, currentTrack, playTrack]);
 
   const prevTrack = useCallback(() => {
-    if (playlist.length === 0 || !currentTrack) return;
-    const currentIndex = playlist.findIndex((t) => t.id === currentTrack.id);
-    const prevIndex = currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
-    playTrack(playlist[prevIndex]);
-  }, [playlist, currentTrack, playTrack]);
+    if (activePlaylist.length === 0 || !currentTrack) return;
+    const currentIndex = activePlaylist.findIndex((t) => t.id === currentTrack.id);
+    const prevIndex = currentIndex === 0 ? activePlaylist.length - 1 : currentIndex - 1;
+    playTrack(activePlaylist[prevIndex]);
+  }, [activePlaylist, currentTrack, playTrack]);
 
-  // 2. Audio Engine Lifecycle Instantiation
+  // 1. Singleton Audio Core Instantiation Lifecycle
   useEffect(() => {
     const audio = new Audio();
     audio.volume = volume;
@@ -84,41 +84,43 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     const onTimeUpdate = () => setCurrentTime(audio.currentTime);
     const onLoadedMetadata = () => setDuration(audio.duration || 0);
-    const onEnded = () => nextTrack();
 
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("loadedmetadata", onLoadedMetadata);
-    audio.addEventListener("ended", onEnded);
 
     return () => {
       audio.pause();
       audio.removeEventListener("timeupdate", onTimeUpdate);
       audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-      audio.removeEventListener("ended", onEnded);
     };
-  }, [nextTrack, volume]);
+  }, []);
 
-  // Volume Hardware Watcher
+  // 2. Dynamic Event Listener Binding Layer for Auto-Advance
+  // Separated to guarantee that the ended listener always has access to the freshest track index references
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-    }
-  }, [volume]);
+    const audio = audioRef.current;
+    if (!audio) return;
 
-  // Source Audio File Stream Core Handler
+    audio.addEventListener("ended", nextTrack);
+    return () => {
+      audio.removeEventListener("ended", nextTrack);
+    };
+  }, [nextTrack]);
+
+  // 3. Audio Streaming Sync Effect
   useEffect(() => {
     if (!audioRef.current || !currentTrack) return;
     
     const audio = audioRef.current;
-    const basicUrlUpdateNeeded = audio.src !== currentTrack.audioUrl;
+    const isNewUrl = audio.src !== currentTrack.audioUrl;
 
-    if (basicUrlUpdateNeeded) {
+    if (isNewUrl) {
       audio.src = currentTrack.audioUrl;
       audio.load();
     }
 
     if (isPlaying) {
-      audio.play().catch((err) => console.log("Playback interrupted safely:", err));
+      audio.play().catch((err) => console.warn("Audio Context safe playback intercept:", err));
     } else {
       audio.pause();
     }
@@ -127,7 +129,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   return (
     <AudioContext.Provider 
       value={{ 
-        currentTrack, isPlaying, volume, currentTime, duration, 
+        currentTrack, isPlaying, volume, currentTime, duration, activePlaylist,
         playTrack, togglePlay, changeVolume, seekTrack, nextTrack, prevTrack, changeActivePlaylist 
       }}
     >
@@ -138,6 +140,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
 export function useAudio() {
   const context = useContext(AudioContext);
-  if (!context) throw new Error("useAudio must be used inside an AudioProvider");
+  if (!context) {
+    throw new Error("CRITICAL CONTEXT BREAK: useAudio must be invoked strictly inside a configured AudioProvider node.");
+  }
   return context;
 }

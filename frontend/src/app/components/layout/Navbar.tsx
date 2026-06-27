@@ -5,9 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Search, ShoppingCart, User, Music, FileText, Calendar, Award } from "lucide-react";
+import { useCart } from "../../context/CartContext";
+import CurrencyDropdown from "../navigation/CurrencyDropdown"; // 1. IMPORT DROPDOWN MOUNT LAYER
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { cart, setIsCartOpen } = useCart();
   const [imgError, setImgError] = useState(false);
 
   const navLinks = [
@@ -24,7 +27,6 @@ export default function Navbar() {
         
         {/* LOGO AREA */}
         <Link href="/" className="flex items-center gap-3 shrink-0 group">
-          {/* Logo Icon Container */}
           {!imgError && (
             <div className="relative h-8 w-8 transition-transform duration-200 group-hover:scale-105">
               <Image 
@@ -38,13 +40,12 @@ export default function Navbar() {
             </div>
           )}
           
-          {/* Brand Typography Text */}
           <span className="text-xl font-black tracking-wider text-white uppercase whitespace-nowrap select-none">
             KWACI <span className="text-primary font-serif italic lowercase">beatz</span>
           </span>
         </Link>
 
-        {/* RIGHT COLUMN: Nav Links, Expanding Search & Portal Actions */}
+        {/* RIGHT COLUMN: Nav Links, Search, Currency Switcher & Portal Actions */}
         <div className="flex items-center gap-3 lg:gap-4 ml-auto">
           
           {/* EXPANDING SEARCH BAR */}
@@ -79,7 +80,13 @@ export default function Navbar() {
             })}
           </div>
 
+          {/* Separation Divider Anchor Line */}
           <div className="h-4 w-px bg-surface hidden lg:block" />
+
+          {/* 2. CURRENCY DROPDOWN MOUNTED MATRIX LAYER */}
+          <div className="hidden sm:block">
+            <CurrencyDropdown />
+          </div>
 
           {/* User Portal Access */}
           <Link 
@@ -90,15 +97,17 @@ export default function Navbar() {
             <User className="h-4 w-4" />
           </Link>
 
-          {/* Cart Icon CTA */}
-          <Link 
-            href="/cart"
-            className="flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-background font-bold text-xs hover:scale-105 active:scale-95 transition"
+          {/* Dynamic Interactive Cart Trigger */}
+          <button 
+            onClick={() => setIsCartOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-background font-bold text-xs hover:scale-105 active:scale-95 transition focus:outline-none"
           >
             <ShoppingCart className="h-3.5 w-3.5 fill-current" />
             <span className="hidden sm:inline">Cart</span>
-            <span className="bg-background/10 px-1.5 py-0.5 rounded-full text-[10px]">0</span>
-          </Link>
+            <span className="bg-background/20 px-1.5 py-0.5 rounded-full text-[10px] min-w-[18px] text-center">
+              {cart.length}
+            </span>
+          </button>
 
         </div>
       </div>

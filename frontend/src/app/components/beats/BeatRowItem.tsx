@@ -3,17 +3,7 @@
 import React, { useState } from "react";
 import { Play, Pause, ShoppingCart, Heart, MessageSquare } from "lucide-react";
 import { useAudio } from "../../context/AudioContext";
-
-interface Track {
-  id: string;
-  title: string;
-  producer: string;
-  bpm: string;
-  key: string;
-  genre: string;
-  tags: string[];
-  audioUrl: string;
-}
+import { Track } from "../../services/beatService";
 
 interface BeatRowItemProps {
   beat: Track;
@@ -147,7 +137,7 @@ export default function BeatRowItem({ beat, index, onOpenLicense }: BeatRowItemP
           className="flex items-center justify-center gap-2 w-full md:w-auto bg-primary text-background text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg hover:scale-[1.03] active:scale-[0.98] hover:bg-primary-hover transition-all shadow-lg"
         >
           <ShoppingCart className="h-3.5 w-3.5 fill-current" />
-          <span>$29.99</span>
+          <span>${beat.price ? beat.price.toFixed(2) : "29.99"}</span>
         </button>
       </div>
 

@@ -8,27 +8,31 @@ interface SearchFiltersProps {
 }
 
 export default function SearchFilters({ activeGenre, onGenreChange }: SearchFiltersProps) {
-  // Production focus categories matching your specialized sonic assets
-  const genres = ["All", "Afrobeat", "Amapiano", "Trap", "Asakaa / Drill", "Dancehall"];
+  // Production chip categories matching the keys in your seed beatService layer
+  const genres = ["All", "Afrobeats", "Asakaa / Drill", "Amapiano", "Highlife", "Trap"];
 
   return (
-    <div className="w-full flex flex-wrap items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-none">
-      {genres.map((genre) => {
-        const isActive = activeGenre === genre;
-        return (
-          <button
-            key={genre}
-            onClick={() => onGenreChange(genre)}
-            className={`px-4 py-2 rounded-full text-xs font-bold tracking-wide border transition-all duration-200 select-none whitespace-nowrap ${
-              isActive
-                ? "bg-primary text-background border-primary shadow-lg shadow-primary/10 scale-105"
-                : "bg-accent/40 border-surface/80 text-zinc-400 hover:text-white hover:border-zinc-600"
-            }`}
-          >
-            {genre}
-          </button>
-        );
-      })}
+    <div className="w-full mb-8">
+      {/* Horizontal Scroll Wrapper with hidden scrollbar styling */}
+      <div className="flex items-center gap-2.5 overflow-x-auto pb-2 pt-1 scrollbar-none snap-x">
+        {genres.map((genre) => {
+          const isActive = activeGenre === genre;
+          return (
+            <button
+              key={genre}
+              type="button"
+              onClick={() => onGenreChange(genre)}
+              className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-150 snap-誠 focus:outline-none whitespace-nowrap active:scale-[0.97] border ${
+                isActive
+                  ? "bg-primary text-background border-primary shadow-md shadow-primary/10"
+                  : "bg-accent/40 text-zinc-400 border-surface/60 hover:text-white hover:bg-surface hover:border-zinc-700"
+              }`}
+            >
+              {genre}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
