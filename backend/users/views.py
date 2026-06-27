@@ -1,6 +1,9 @@
 from rest_framework import generics, permissions
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from .serializers import (
@@ -11,6 +14,27 @@ from .serializers import (
 
 User = get_user_model()
 
+
+class AdminTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        user = self.user
+
+        if not user.is_staff:
+            raise PermissionDenied('Only staff users can access the admin dashboard.')
+
+        return data
+
+
+class AdminTokenObtainPairView(TokenObtainPairView):
+    serializer_class = AdminTokenObtainPairSerializer
+
+
+class UserTokenObtainPairView(TokenObtainPairView):
+    """Regular user login - allows any authenticated user"""
+    permission_classes = [permissions.AllowAny]
+
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
@@ -18,7 +42,7 @@ class RegisterView(generics.CreateAPIView):
 
 
 class LogoutView(APIView):
-    permission_class = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         try:

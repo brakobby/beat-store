@@ -110,13 +110,23 @@ WSGI_APPLICATION = 'beatstore.wsgi.application'
 #     }
 # }
 
-DATABASES = {
-    'default':dj_database_url.config(
-        default=os.getenv('DATABASE_URL'),
-        conn_max_age = 600,
-        ssl_require = True
-    )
-}
+database_url = os.getenv('DATABASE_URL', 'sqlite:///db.sqlite3')
+
+if database_url.startswith('sqlite'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=database_url,
+            conn_max_age=600,
+            ssl_require=True,
+        )
+    }
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
